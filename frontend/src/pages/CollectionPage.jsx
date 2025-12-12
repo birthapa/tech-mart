@@ -1,3 +1,4 @@
+// frontend/src/pages/CollectionPage.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { FaFilter } from "react-icons/fa";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -11,8 +12,8 @@ const CollectionPage = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.products);
-
   const searchKey = searchParams.toString();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
@@ -22,15 +23,29 @@ const CollectionPage = () => {
     women: { gender: "Women" },
     "top-wear": { category: "Top Wear" },
     "bottom-wear": { category: "Bottom Wear" },
-    all: {}, // no filters
+    all: {},
   };
+
+  // This is the fix: Auto-select correct radio button in FilterSidebar
+  useEffect(() => {
+    const currentFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
+
+    // Force FilterSidebar to reflect current collection
+    // We dispatch a fake action so FilterSidebar updates its internal state
+    if (currentFilters.gender) {
+      document.querySelector(`input[name="gender"][value="${currentFilters.gender}"]`)?.click();
+    } else if (currentFilters.category) {
+      document.querySelector(`input[name="category"][value="${currentFilters.category}"]`)?.click();
+    } else {
+      // Reset to "All"
+      document.querySelector(`input[name="gender"][value="All"]`)?.click();
+      document.querySelector(`input[name="category"][value="All"]`)?.click();
+    }
+  }, [collection]);
 
   useEffect(() => {
     const params = Object.fromEntries(searchParams.entries());
-
-    // Merge filters based on collection route
     const mappedFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
-
     dispatch(fetchProductsByFilters({ ...params, ...mappedFilters }));
   }, [dispatch, collection, searchKey]);
 
@@ -93,7 +108,7 @@ const CollectionPage = () => {
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold uppercase tracking-wide">
-              {collection || "All Collection"}
+              {collection?.replace("-", " ") || "All Collection"}
             </h2>
             <SortOptions />
           </div>
