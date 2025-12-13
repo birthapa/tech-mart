@@ -17,36 +17,39 @@ const CollectionPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
-  // Mapping collection param to real filter fields
+  // Mapping collection route → default filter (only if no manual filter exists)
   const collectionToFilterMap = {
     men: { gender: "Men" },
     women: { gender: "Women" },
     "top-wear": { category: "Top Wear" },
     "bottom-wear": { category: "Bottom Wear" },
-    all: {},
+    all: {}, // All products
   };
 
-  // This is the fix: Auto-select correct radio button in FilterSidebar
+  // MAIN FIX: Smart filter logic
   useEffect(() => {
-    const currentFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
+    const urlParams = Object.fromEntries(searchParams.entries());
+    let finalFilters = { ...urlParams };
 
-    // Force FilterSidebar to reflect current collection
-    // We dispatch a fake action so FilterSidebar updates its internal state
-    if (currentFilters.gender) {
-      document.querySelector(`input[name="gender"][value="${currentFilters.gender}"]`)?.click();
-    } else if (currentFilters.category) {
-      document.querySelector(`input[name="category"][value="${currentFilters.category}"]`)?.click();
-    } else {
-      // Reset to "All"
-      document.querySelector(`input[name="gender"][value="All"]`)?.click();
-      document.querySelector(`input[name="category"][value="All"]`)?.click();
+    // Only apply collection default filter if:
+    // 1. We are on a specific collection page
+    // 2. AND user has NOT manually selected any filter (gender or category)
+    if (collection && collection !== "all") {
+      const defaultFilter = collectionToFilterMap[collection.toLowerCase()];
+      if (defaultFilter) {
+        // Apply gender only if not already set
+        if (!finalFilters.gender && defaultFilter.gender) {
+          finalFilters.gender = defaultFilter.gender;
+        }
+        // Apply category only if not already set
+        if (!finalFilters.category && defaultFilter.category) {
+          finalFilters.category = defaultFilter.category;
+        }
+      }
     }
-  }, [collection]);
 
-  useEffect(() => {
-    const params = Object.fromEntries(searchParams.entries());
-    const mappedFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
-    dispatch(fetchProductsByFilters({ ...params, ...mappedFilters }));
+    // If user clicked "All", we don't override anything
+    dispatch(fetchProductsByFilters(finalFilters));
   }, [dispatch, collection, searchKey]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);

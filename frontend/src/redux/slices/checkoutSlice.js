@@ -1,59 +1,62 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+// CREATE CHECKOUT
 export const createCheckout = createAsyncThunk(
   "checkout/createCheckout",
-  async (checkoutdata, { rejectWithValue }) => {
+  async (checkoutData, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("userToken");
-      if (!token) {
-        throw new Error("No authentication token found");
+
+      if (!token || token === "null" || token === "undefined" || token.trim() === "") {
+        return rejectWithValue({ message: "Please login again. Token missing." });
       }
-      console.log("Checkout payload sent:", checkoutdata);
+
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/checkout`,
-        checkoutdata,
+        "/api/checkout",  // ← Relative path (proxied by Vite)
+        checkoutData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      console.log("Checkout response:", response.data);
+
       return response.data;
     } catch (error) {
-      console.error("Checkout error:", error.response?.data || error.message);
-      return rejectWithValue(
-        error.response?.data || { message: "Checkout failed" }
-      );
+      const msg = error.response?.data?.message || error.message || "Checkout failed";
+      return rejectWithValue({ message: msg });
     }
   }
 );
 
-export const verifyKhaltiPayment = createAsyncThunk(
-  "checkout/verifyKhaltiPayment",
-  async ({ pidx, orderId }, { rejectWithValue }) => {
+// INITIATE KHALTI PAYMENT
+export const initiateKhaltiPayment = createAsyncThunk(
+  "checkout/initiateKhaltiPayment",
+  async (checkoutId, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("userToken");
-      if (!token) {
-        throw new Error("No authentication token found");
+
+      if (!token || token.trim() === "") {
+        return rejectWithValue({ message: "Session expired. Please login again." });
       }
+
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/checkout/verify-payment`,
-        { pidx, orderId },
+        `/api/checkout/${checkoutId}/initiate-khalti`,  // ← Relative path
+        {},
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
+
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || { message: "Payment verification failed" }
-      );
+      const msg = error.response?.data?.message || "Failed to initiate Khalti payment";
+      return rejectWithValue({ message: msg });
     }
   }
 );
@@ -64,39 +67,47 @@ const checkoutSlice = createSlice({
     checkout: null,
     loading: false,
     error: null,
+    success: false,
+    paymentLoading: false,
+    paymentError: null,
   },
-  reducers: {},
+  reducers: {
+    clearCheckoutError: (state) => {
+      state.error = null;
+      state.paymentError = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(createCheckout.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.success = false;
       })
       .addCase(createCheckout.fulfilled, (state, action) => {
         state.loading = false;
         state.checkout = action.payload;
+        state.success = true;
       })
       .addCase(createCheckout.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Checkout failed";
+        state.success = false;
       })
-      .addCase(verifyKhaltiPayment.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+
+      .addCase(initiateKhaltiPayment.pending, (state) => {
+        state.paymentLoading = true;
+        state.paymentError = null;
       })
-      .addCase(verifyKhaltiPayment.fulfilled, (state, action) => {
-        state.loading = false;
-        state.checkout = {
-          ...state.checkout,
-          verified: true,
-          order: action.payload,
-        };
+      .addCase(initiateKhaltiPayment.fulfilled, (state) => {
+        state.paymentLoading = false;
       })
-      .addCase(verifyKhaltiPayment.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Payment verification failed";
+      .addCase(initiateKhaltiPayment.rejected, (state, action) => {
+        state.paymentLoading = false;
+        state.paymentError = action.payload?.message || "Payment initiation failed";
       });
   },
 });
 
+export const { clearCheckoutError } = checkoutSlice.actions;
 export default checkoutSlice.reducer;

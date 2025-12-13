@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createCheckout } from "../../redux/slices/checkoutSlice";
+import { createCheckout, clearCheckoutError } from "../../redux/slices/checkoutSlice";
 import CheckoutComponent from "./CheckoutComponent";
 
 const Checkout = () => {
@@ -10,7 +10,7 @@ const Checkout = () => {
 
   const { cart } = useSelector((state) => state.cart);
   const { user } = useSelector((state) => state.auth);
-  const { loading, error } = useSelector((state) => state.checkout);
+  const { loading, error, paymentError } = useSelector((state) => state.checkout);
 
   const [checkoutId, setCheckoutId] = useState(null);
 
@@ -45,6 +45,7 @@ const Checkout = () => {
 
   const handleCreateCheckout = async (e) => {
     e.preventDefault();
+    dispatch(clearCheckoutError()); // Clear any previous errors
 
     const payload = {
       checkoutItems: cart.products,
@@ -71,6 +72,21 @@ const Checkout = () => {
     return value.replace(/[^\d+]/g, '');
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "phone") {
+      setShippingAddress((prev) => ({
+        ...prev,
+        phone: formatPhoneNumber(value),
+      }));
+    } else {
+      setShippingAddress((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white py-10 px-7 -mt-20">
       <div className="flex flex-col lg:flex-row justify-between max-w-6xl mx-auto gap-3">
@@ -92,42 +108,30 @@ const Checkout = () => {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <input
                   type="text"
+                  name="firstName"
                   placeholder="First Name"
                   value={shippingAddress.firstName}
-                  onChange={(e) =>
-                    setShippingAddress((prev) => ({
-                      ...prev,
-                      firstName: e.target.value,
-                    }))
-                  }
-                  className="p-2 border border-gray-300 rounded text-sm"
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
                   required
                 />
                 <input
                   type="text"
+                  name="lastName"
                   placeholder="Last Name"
                   value={shippingAddress.lastName}
-                  onChange={(e) =>
-                    setShippingAddress((prev) => ({
-                      ...prev,
-                      lastName: e.target.value,
-                    }))
-                  }
-                  className="p-2 border border-gray-300 rounded text-sm"
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
                   required
                 />
               </div>
 
               <input
                 type="text"
+                name="address"
                 placeholder="Address"
                 value={shippingAddress.address}
-                onChange={(e) =>
-                  setShippingAddress((prev) => ({
-                    ...prev,
-                    address: e.target.value,
-                  }))
-                }
+                onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded text-sm mb-4"
                 required
               />
@@ -135,62 +139,48 @@ const Checkout = () => {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <input
                   type="text"
+                  name="city"
                   placeholder="City"
                   value={shippingAddress.city}
-                  onChange={(e) =>
-                    setShippingAddress((prev) => ({
-                      ...prev,
-                      city: e.target.value,
-                    }))
-                  }
-                  className="p-2 border border-gray-300 rounded text-sm"
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
                   required
                 />
                 <input
                   type="text"
+                  name="postalCode"
                   placeholder="Postal Code"
                   value={shippingAddress.postalCode}
-                  onChange={(e) =>
-                    setShippingAddress((prev) => ({
-                      ...prev,
-                      postalCode: e.target.value,
-                    }))
-                  }
-                  className="p-2 border border-gray-300 rounded text-sm"
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
                   required
                 />
               </div>
 
               <input
                 type="text"
+                name="country"
                 placeholder="Country"
                 value={shippingAddress.country}
-                onChange={(e) =>
-                  setShippingAddress((prev) => ({
-                    ...prev,
-                    country: e.target.value,
-                  }))
-                }
+                onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded text-sm mb-4"
                 required
               />
 
-              <input
-                type="tel"
-                placeholder="Phone (e.g., 9779841234567 or +9779841234567)"
-                value={shippingAddress.phone}
-                onChange={(e) =>
-                  setShippingAddress((prev) => ({
-                    ...prev,
-                    phone: formatPhoneNumber(e.target.value),
-                  }))
-                }
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Format: 9779841234567 or +9779841234567
-              </p>
+              <div>
+                <input
+                  type="text"
+                  name="phone"
+                  placeholder="Phone (e.g. 9779841234567)"
+                  value={shippingAddress.phone}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: 9779841234567 or +9779841234567
+                </p>
+              </div>
             </div>
 
             {!checkoutId ? (
@@ -212,11 +202,9 @@ const Checkout = () => {
               </div>
             )}
 
-            {error && (
-              <p className="text-red-500 text-sm font-medium mt-2">
-                {typeof error === "string"
-                  ? error
-                  : error.message || "Checkout failed"}
+            {(error || paymentError) && (
+              <p className="text-red-500 text-sm font-medium mt-2 text-center">
+                {error || paymentError}
               </p>
             )}
           </form>

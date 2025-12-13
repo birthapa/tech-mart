@@ -1,72 +1,45 @@
 import React from "react";
-import KhaltiCheckout from "khalti-checkout-web";
-import { useDispatch } from "react-redux";
-import { verifyKhaltiPayment } from "../../redux/slices/checkoutSlice";
-import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { initiateKhaltiPayment } from "../../redux/slices/checkoutSlice";
 
 const CheckoutComponent = ({ amount, checkoutId }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const { paymentLoading, paymentError } = useSelector((state) => state.checkout);
 
-  const config = {
-    publicKey: import.meta.env.VITE_KHALTI_PUBLIC_KEY,
-    productIdentity: checkoutId,
-    productName: "Order Payment",
-    productUrl: window.location.href,
-    eventHandler: {
-      onSuccess(payload) {
-        console.log("Khalti payment successful. Payload:", payload);
-        // Dispatch verification to backend
-        dispatch(verifyKhaltiPayment({ 
-          pidx: payload.idx || payload.pidx, 
-          orderId: checkoutId 
-        }))
-          .unwrap()
-          .then(() => {
-            navigate("/order-confirmation", { 
-              state: { 
-                success: true, 
-                amount: amount,
-                checkoutId: checkoutId
-              } 
-            });
-          })
-          .catch((error) => {
-            console.error("Payment verification failed:", error);
-            alert('Payment verification failed. Please contact support.');
-          });
-      },
-      onError(error) {
-        console.error("Khalti payment error:", error);
-        alert('Payment failed. Please try again.');
-      },
-      onClose() {
-        console.log("Khalti widget closed");
-      },
-    },
-    paymentPreference: [
-      "KHALTI",
-      "EBANKING",
-      "MOBILE_BANKING",
-      "CONNECT_IPS",
-      "SCT",
-    ],
-  };
+  const handlePayWithKhalti = async () => {
+    try {
+      const result = await dispatch(initiateKhaltiPayment(checkoutId)).unwrap();
 
-  const checkout = new KhaltiCheckout(config);
-
-  const openKhaltiWidget = () => {
-    checkout.show({ amount: amount * 100 }); // Amount in paisa
+      if (result.payment_url) {
+        // Redirect user to Khalti's actual payment page
+        window.location.href = result.payment_url;
+      } else {
+        alert("No payment link received. Please try again.");
+      }
+    } catch (err) {
+      console.error("Khalti payment initiation failed:", err);
+    }
   };
 
   return (
-    <div>
+    <div className="space-y-4">
       <button
-        onClick={openKhaltiWidget}
-        className="w-full py-3 text-white text-sm font-medium rounded bg-purple-600 hover:bg-purple-700"
+        onClick={handlePayWithKhalti}
+        disabled={paymentLoading}
+        className={`w-full py-3 text-white text-sm font-medium rounded transition-all ${
+          paymentLoading
+            ? "bg-purple-400 cursor-not-allowed"
+            : "bg-purple-600 hover:bg-purple-700"
+        }`}
       >
-        Pay NPR {amount.toFixed(2)} with Khalti
+        {paymentLoading ? "Redirecting to Khalti..." : `Pay NPR ${amount.toFixed(2)} with Khalti`}
       </button>
+
+      {paymentError && (
+        <p className="text-red-600 text-center font-medium bg-red-50 py-2 rounded-lg">
+          {paymentError}
+        </p>
+      )}
     </div>
   );
 };
