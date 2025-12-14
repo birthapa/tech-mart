@@ -1,18 +1,23 @@
 import React from "react";
 import { IoMdClose } from "react-icons/io";
-import CartContents from "../carts/CartContents"; // Ensure path is correct
+import CartContents from "../carts/CartContents";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const CartDrawer = ({ isOpen = false, toggleCart = () => {} }) => {
   const navigate = useNavigate();
 
-  const { user, guestId } = useSelector((state) => state.auth);
-  const { cart } = useSelector((state) => state.cart || {});
-  const userId = user ? user._id : null;
+  // Get user and guestId from auth state (adjust path if your auth slice is different)
+  const { user } = useSelector((state) => state.auth || {});
+  const guestId = useSelector((state) => state.auth?.guestId || null);
+
+  // Get cart from cart state with safe fallback
+  const { cart = { products: [] }, loading } = useSelector((state) => state.cart || {});
+
+  const userId = user?._id || null;
 
   const handleCheckout = () => {
-    toggleCart();
+    toggleCart(); // Close drawer
     if (!user) {
       navigate("/login?redirect=checkout");
     } else {
@@ -20,47 +25,78 @@ const CartDrawer = ({ isOpen = false, toggleCart = () => {} }) => {
     }
   };
 
+  const subtotal = cart.products.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
+  if (!isOpen) return null;
+
   return (
-    <div
-      className={`fixed top-0 right-0 w-3/4 sm:w-1/2 md:w-1/3 h-full bg-white shadow-lg transform transition-transform duration-300 flex flex-col z-50 ${
-        isOpen ? "translate-x-0" : "translate-x-full"
-      }`}
-      aria-hidden={!isOpen}
-      aria-label="Shopping cart drawer"
-    >
-      <div className="flex justify-end p-4">
-        <button onClick={toggleCart} aria-label="Close cart">
-          <IoMdClose className="h-6 w-6 text-gray-600 hover:text-gray-800" />
-        </button>
-      </div>
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0  bg-opacity-50 z-40"
+        onClick={toggleCart}
+      />
 
-      <div className="flex-grow p-4 overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4">Your Cart</h2>
+      {/* Drawer */}
+      <div
+        className={`fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col z-50 ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b">
+          <h2 className="text-xl font-bold">Your Cart</h2>
+          <button
+            onClick={toggleCart}
+            className="p-2 hover:bg-gray-100 rounded-full transition"
+            aria-label="Close cart"
+          >
+            <IoMdClose className="h-6 w-6" />
+          </button>
+        </div>
 
-        {cart && cart?.products?.length > 0 ? (
-          <CartContents cart={cart} userId={userId} guestId={guestId} />
-        ) : (
-          <p>Your cart is empty.</p>
-        )}
-      </div>
+        {/* Cart Contents */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <p className="text-center text-gray-500">Loading cart...</p>
+          ) : cart.products.length > 0 ? (
+            <CartContents cart={cart} userId={userId} guestId={guestId} />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Your cart is empty</p>
+              <button
+                onClick={toggleCart}
+                className="mt-4 text-blue-600 hover:underline"
+              >
+                Continue shopping
+              </button>
+            </div>
+          )}
+        </div>
 
-      {/* Checkout button fixed at the bottom */}
-      <div className="p-4 bg-white sticky bottom-0">
-        {cart && cart?.products?.length > 0 && (
-          <>
+        {/* Footer with Subtotal & Checkout */}
+        {cart.products.length > 0 && (
+          <div className="border-t bg-white p-6">
+            <div className="flex justify-between text-lg font-semibold mb-4">
+              <span>Subtotal</span>
+              <span>NPR {subtotal.toLocaleString()}</span>
+            </div>
             <button
               onClick={handleCheckout}
-              className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
+              className="w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition"
             >
-              Checkout
+              Proceed to Checkout
             </button>
-            <p className="text-sm tracking-tighter text-gray-500 mt-2 text-center">
-              Shipping, taxes, and discount codes calculated at checkout.
+            <p className="text-xs text-gray-500 text-center mt-3">
+              Shipping, taxes, and discounts calculated at checkout
             </p>
-          </>
+          </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

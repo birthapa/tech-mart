@@ -1,24 +1,24 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-
-
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux"; // ← CRITICAL: Added this import
+import { fetchAdminProducts, deleteProduct } from "../../redux/slices/adminProductSlice"; // ← Adjust path if needed
 
 const ProductManagement = () => {
   const dispatch = useDispatch();
-const { products, loading, error} = useSelector(
-(state) => state.adminProducts
-);
-useEffect(() => {
-dispatch(fetchAdminProducts());
-}, [dispatch]);
+  const { products, loading, error } = useSelector((state) => state.adminProducts);
+
+  useEffect(() => {
+    dispatch(fetchAdminProducts());
+  }, [dispatch]);
 
   const handleDelete = (id) => {
-  if (window.confirm("Are you sure you want to delete the Product?")) {
-   dispatch(deleteProduct(id));
-  }
-};
-if (loading) return <p>Loading ...</p>;
-if (error) return <p>Error: (error)</p>;
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      dispatch(deleteProduct(id));
+    }
+  };
+
+  if (loading) return <p className="text-center py-12">Loading products...</p>;
+  if (error) return <p className="text-center py-12 text-red-600">Error: {error}</p>;
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -64,7 +64,7 @@ if (error) return <p>Error: (error)</p>;
             ) : (
               <tr>
                 <td colSpan={4} className="p-4 text-center text-gray-500">
-                  No Products found.
+                  No products found.
                 </td>
               </tr>
             )}

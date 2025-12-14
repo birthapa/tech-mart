@@ -4,7 +4,8 @@ import { RiTwitterXLine } from "react-icons/ri";
 
 const Topbar = () => {
   return (
-    <div className="bg-[#e8e2e1] text-black p-2 z-50">
+    // FIXED: Hidden on mobile (screen < md), visible on tablet & desktop
+    <div className="hidden md:block bg-[#e8e2e1] text-black p-2 z-50">
       <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto">
         {/* Left Section - Brand Name + Icons */}
         <div className="flex items-center space-x-4 min-w-[120px]">

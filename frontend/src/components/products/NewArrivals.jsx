@@ -79,7 +79,7 @@ const NewArrivals = () => {
   };
 
   return (
-    <section className="py-10 px-2 lg:px-6">
+    <section className="py-10 px-2 lg:px-12">
       <div className="mx-auto max-w-screen-xl px-4">
         {/* Header */}
         <div className="text-center mb-4">

@@ -12,43 +12,42 @@ const CollectionPage = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.products);
+
   const searchKey = searchParams.toString();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
-  // Mapping collection route → default filter (only if no manual filter exists)
   const collectionToFilterMap = {
     men: { gender: "Men" },
     women: { gender: "Women" },
     "top-wear": { category: "Top Wear" },
     "bottom-wear": { category: "Bottom Wear" },
-    all: {}, // All products
+    all: {},
   };
 
-  // MAIN FIX: Smart filter logic
   useEffect(() => {
     const urlParams = Object.fromEntries(searchParams.entries());
     let finalFilters = { ...urlParams };
 
-    // Only apply collection default filter if:
-    // 1. We are on a specific collection page
-    // 2. AND user has NOT manually selected any filter (gender or category)
     if (collection && collection !== "all") {
       const defaultFilter = collectionToFilterMap[collection.toLowerCase()];
       if (defaultFilter) {
-        // Apply gender only if not already set
         if (!finalFilters.gender && defaultFilter.gender) {
           finalFilters.gender = defaultFilter.gender;
         }
-        // Apply category only if not already set
         if (!finalFilters.category && defaultFilter.category) {
           finalFilters.category = defaultFilter.category;
         }
       }
     }
 
-    // If user clicked "All", we don't override anything
+    // Force fetch all when on "all" by sending empty or "all"
+    if (collection === "all") {
+      finalFilters = {}; // or { collection: "all" }
+    }
+
+    console.log("Dispatching fetch with filters:", finalFilters); // DEBUG
     dispatch(fetchProductsByFilters(finalFilters));
   }, [dispatch, collection, searchKey]);
 
@@ -67,9 +66,12 @@ const CollectionPage = () => {
 
   const safeProducts = Array.isArray(products) ? products : [];
 
+  // DEBUG LOGS
+  console.log("Current products state:", safeProducts);
+  console.log("Loading:", loading, "Error:", error);
+
   return (
     <div className="p-4 mt-[-100px]">
-      {/* Mobile Filter Toggle */}
       <div className="flex mb-4 lg:hidden ml-1 mt-2">
         <button
           onClick={toggleSidebar}
@@ -82,7 +84,6 @@ const CollectionPage = () => {
         </button>
       </div>
 
-      {/* Mobile Backdrop */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 lg:hidden"
@@ -91,9 +92,7 @@ const CollectionPage = () => {
         />
       )}
 
-      {/* Main Layout */}
       <div className="flex">
-        {/* Sidebar */}
         <div
           id="filter-sidebar"
           ref={sidebarRef}
@@ -107,31 +106,38 @@ const CollectionPage = () => {
           <FilterSidebar />
         </div>
 
-        {/* Product Grid */}
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold uppercase tracking-wide">
-              {collection?.replace("-", " ") || "All Collection"}
+              {collection === "all"
+                ? "All Collection"
+                : collection?.replace("-", " ") || "Collection"}
             </h2>
             <SortOptions />
           </div>
 
           {loading ? (
-            <p>Loading products...</p>
+            <p className="text-center py-12 text-gray-600">Loading products...</p>
           ) : error ? (
-            <p className="text-red-500">{String(error)}</p>
+            <p className="text-center py-12 text-red-600">
+              Error: {String(error)}
+            </p>
           ) : safeProducts.length === 0 ? (
-            <p className="text-gray-600">No products found.</p>
+            <p className="text-center py-12 text-gray-600">
+              No products found.
+            </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10 px-2 sm:px-0">
               {safeProducts.map((product) => {
                 const img =
                   product?.images?.[0]?.url ||
+                  product?.images?.[0] ||
                   "https://via.placeholder.com/600x800?text=No+Image";
+
                 return (
                   <div
                     key={product._id}
-                    className="hover:shadow-lg transition-shadow duration-200"
+                    className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
                   >
                     <img
                       src={img}

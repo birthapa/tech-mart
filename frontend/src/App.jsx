@@ -45,7 +45,12 @@ const App = () => {
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="collection/:collection" element={<CollectionPage />} />
+
+             {/* ADD THIS: Collection routes */}
+              <Route path="collections/:collection" element={<CollectionPage />} />
+              {/* Optional: support /collections without param (shows all) */}
+              <Route path="collections" element={<CollectionPage />} />
+
               <Route path="product/:id" element={<ProductDetails />} />
               <Route path="checkout" element={<CheckOut />} />
               <Route path="order-confirmation" element={<OrderConfirmationPage />} />

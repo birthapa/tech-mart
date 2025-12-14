@@ -52,7 +52,7 @@ const Navbar = ({ toggleCart }) => {
             {user && user.role === "admin" &&(
             <Link
               to="/admin"
-              className="block bg-black px-2 py-1 rounded text-sm text-white"
+              className="hidden md:block  bg-black px-2 py-1 rounded text-sm text-white"
             >
               Admin
             </Link>
