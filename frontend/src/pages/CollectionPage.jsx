@@ -43,7 +43,6 @@ const CollectionPage = () => {
   }, [collection]);
 
   useEffect(() => {
-<<<<<<< Updated upstream
     const urlParams = Object.fromEntries(searchParams.entries());
     let finalFilters = { ...urlParams };
 
@@ -66,11 +65,6 @@ const CollectionPage = () => {
 
     console.log("Dispatching fetch with filters:", finalFilters); // DEBUG
     dispatch(fetchProductsByFilters(finalFilters));
-=======
-    const params = Object.fromEntries(searchParams.entries());
-    const mappedFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
-    dispatch(fetchProductsByFilters({ ...params, ...mappedFilters }));
->>>>>>> Stashed changes
   }, [dispatch, collection, searchKey]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
@@ -131,13 +125,9 @@ const CollectionPage = () => {
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold uppercase tracking-wide">
-<<<<<<< Updated upstream
               {collection === "all"
                 ? "All Collection"
                 : collection?.replace("-", " ") || "Collection"}
-=======
-              {collection?.replace("-", " ") || "All Collection"}
->>>>>>> Stashed changes
             </h2>
             <SortOptions />
           </div>
