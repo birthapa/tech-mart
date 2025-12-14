@@ -12,7 +12,6 @@ const CollectionPage = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.products);
-
   const searchKey = searchParams.toString();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -26,7 +25,25 @@ const CollectionPage = () => {
     all: {},
   };
 
+  // This is the fix: Auto-select correct radio button in FilterSidebar
   useEffect(() => {
+    const currentFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
+
+    // Force FilterSidebar to reflect current collection
+    // We dispatch a fake action so FilterSidebar updates its internal state
+    if (currentFilters.gender) {
+      document.querySelector(`input[name="gender"][value="${currentFilters.gender}"]`)?.click();
+    } else if (currentFilters.category) {
+      document.querySelector(`input[name="category"][value="${currentFilters.category}"]`)?.click();
+    } else {
+      // Reset to "All"
+      document.querySelector(`input[name="gender"][value="All"]`)?.click();
+      document.querySelector(`input[name="category"][value="All"]`)?.click();
+    }
+  }, [collection]);
+
+  useEffect(() => {
+<<<<<<< Updated upstream
     const urlParams = Object.fromEntries(searchParams.entries());
     let finalFilters = { ...urlParams };
 
@@ -49,6 +66,11 @@ const CollectionPage = () => {
 
     console.log("Dispatching fetch with filters:", finalFilters); // DEBUG
     dispatch(fetchProductsByFilters(finalFilters));
+=======
+    const params = Object.fromEntries(searchParams.entries());
+    const mappedFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
+    dispatch(fetchProductsByFilters({ ...params, ...mappedFilters }));
+>>>>>>> Stashed changes
   }, [dispatch, collection, searchKey]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
@@ -109,9 +131,13 @@ const CollectionPage = () => {
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold uppercase tracking-wide">
+<<<<<<< Updated upstream
               {collection === "all"
                 ? "All Collection"
                 : collection?.replace("-", " ") || "Collection"}
+=======
+              {collection?.replace("-", " ") || "All Collection"}
+>>>>>>> Stashed changes
             </h2>
             <SortOptions />
           </div>
