@@ -95,8 +95,10 @@ router.post("/", protect, admin, async (req, res) => {
 // @access  Private/Admin
 router.put("/:id", protect, admin, async (req, res) => {
   try {
-    if (!req.body || typeof req.body !== "object") {
-      return res.status(400).json({ message: "Request body is required" });
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
 
     const {
@@ -121,46 +123,78 @@ router.put("/:id", protect, admin, async (req, res) => {
       sku,
     } = req.body;
 
-    const product = await Product.findById(req.params.id);
+    // Update fields safely (only if provided)
+    if (name !== undefined) product.name = name;
+    if (description !== undefined) product.description = description;
 
-    if (product) {
-      // Update fields with fallback to existing values
-      product.name = name || product.name;
-      product.description = description || product.description;
-      product.price = price || product.price;
-      product.discountPrice = discountPrice || product.discountPrice;
-      product.countInStock = countInStock || product.countInStock;
-      product.category = category || product.category;
-      product.brand = brand || product.brand;
-      product.sizes = Array.isArray(sizes) ? sizes : product.sizes;
-      product.colors = Array.isArray(colors) ? colors : product.colors;
-      product.collections = Array.isArray(collections) ? collections : product.collections;
-      product.material = material || product.material;
-      product.gender = gender || product.gender;
-      product.images = images || product.images;
-      product.isFeatured = isFeatured !== undefined ? isFeatured : product.isFeatured;
-      product.isPublished = isPublished !== undefined ? isPublished : product.isPublished;
-      product.tags = tags || product.tags;
-      product.dimensions = dimensions || product.dimensions;
-      product.weight = weight || product.weight;
-      product.sku = sku || product.sku; // Ensure SKU uniqueness if changed
-
-      // Check for SKU uniqueness if updated
-      if (sku && sku !== product.sku) {
-        const existingProduct = await Product.findOne({ sku });
-        if (existingProduct) {
-          return res.status(400).json({ message: "SKU already exists" });
-        }
+    // FIXED: Convert string to number for numeric fields
+    if (price !== undefined) {
+      const numPrice = Number(price);
+      if (isNaN(numPrice)) {
+        return res.status(400).json({ message: "Price must be a valid number" });
       }
-
-      const updatedProduct = await product.save();
-      res.json(updatedProduct);
-    } else {
-      res.status(404).json({ message: "Product not found" });
+      product.price = numPrice;
     }
+
+    if (discountPrice !== undefined) {
+      if (discountPrice === "" || discountPrice === null) {
+        product.discountPrice = null; // or 0 if preferred
+      } else {
+        const numDiscount = Number(discountPrice);
+        if (isNaN(numDiscount)) {
+          return res.status(400).json({ message: "Discount price must be a valid number" });
+        }
+        product.discountPrice = numDiscount;
+      }
+    }
+
+    if (countInStock !== undefined) {
+      const numStock = Number(countInStock);
+      if (isNaN(numStock) || numStock < 0) {
+        return res.status(400).json({ message: "Stock must be a valid non-negative number" });
+      }
+      product.countInStock = numStock;
+    }
+
+    if (category !== undefined) product.category = category;
+    if (brand !== undefined) product.brand = brand;
+    if (material !== undefined) product.material = material;
+    if (gender !== undefined) product.gender = gender;
+    if (isFeatured !== undefined) product.isFeatured = isFeatured;
+    if (isPublished !== undefined) product.isPublished = isPublished;
+    if (tags !== undefined) product.tags = tags;
+    if (dimensions !== undefined) product.dimensions = dimensions;
+    if (weight !== undefined) product.weight = weight;
+
+    // Handle arrays safely
+    if (Array.isArray(sizes)) product.sizes = sizes;
+    if (Array.isArray(colors)) product.colors = colors;
+    if (Array.isArray(collections)) product.collections = collections;
+
+    // Handle images - only update if new array is sent
+    if (Array.isArray(images) && images.length > 0) {
+      product.images = images;
+    }
+
+    // Handle SKU update with uniqueness check
+    if (sku !== undefined && sku !== product.sku) {
+      const existingSku = await Product.findOne({ sku });
+      if (existingSku) {
+        return res.status(400).json({ message: "SKU already exists" });
+      }
+      product.sku = sku;
+    } else if (sku !== undefined) {
+      product.sku = sku;
+    }
+
+    const updatedProduct = await product.save();
+    res.json(updatedProduct);
   } catch (error) {
     console.error("Product Update Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ 
+      message: "Server Error", 
+      error: process.env.NODE_ENV === "development" ? error.message : "Internal server error"
+    });
   }
 });
 
@@ -207,7 +241,7 @@ router.get("/", async (req, res) => {
 
     // Filter logic
     if (collection && collection.toLowerCase() !== "all") {
-      query.collections = { $in: [collection] }; // Use $in for array-like matching
+      query.collections = { $in: [collection] };
     }
 
     if (category && category.toLowerCase() !== "all") {
@@ -258,7 +292,7 @@ router.get("/", async (req, res) => {
           sort = { price: -1 };
           break;
         case "popularity":
-          sort = { rating: -1 }; // Assuming a 'rating' field exists
+          sort = { rating: -1 };
           break;
         default:
           break;
@@ -298,7 +332,6 @@ router.get("/best-seller", async (req, res) => {
 // @access Public
 router.get("/new-arrivals", async (req, res) => {
   try {
-    // Fetch latest 8 products
     const newArrivals = await Product.find().sort({ createdAt: -1 }).limit(8);
     res.json(newArrivals);
   } catch (error) {
@@ -336,7 +369,7 @@ router.get("/similar/:id", async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
     const similarProducts = await Product.find({
-      _id: { $ne: id }, // Exclude the current product ID
+      _id: { $ne: id },
       gender: product.gender,
       category: product.category,
     }).limit(4);

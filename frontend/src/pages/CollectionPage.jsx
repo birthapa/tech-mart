@@ -1,7 +1,7 @@
 // frontend/src/pages/CollectionPage.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { FaFilter } from "react-icons/fa";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom"; // ← Added Link import
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProductsByFilters } from "../redux/slices/productsSlice";
 import FilterSidebar from "../components/products/FilterSidebar";
@@ -30,7 +30,6 @@ const CollectionPage = () => {
     const currentFilters = collectionToFilterMap[collection?.toLowerCase()] || {};
 
     // Force FilterSidebar to reflect current collection
-    // We dispatch a fake action so FilterSidebar updates its internal state
     if (currentFilters.gender) {
       document.querySelector(`input[name="gender"][value="${currentFilters.gender}"]`)?.click();
     } else if (currentFilters.category) {
@@ -58,12 +57,11 @@ const CollectionPage = () => {
       }
     }
 
-    // Force fetch all when on "all" by sending empty or "all"
     if (collection === "all") {
-      finalFilters = {}; // or { collection: "all" }
+      finalFilters = {};
     }
 
-    console.log("Dispatching fetch with filters:", finalFilters); // DEBUG
+    console.log("Dispatching fetch with filters:", finalFilters);
     dispatch(fetchProductsByFilters(finalFilters));
   }, [dispatch, collection, searchKey]);
 
@@ -82,7 +80,6 @@ const CollectionPage = () => {
 
   const safeProducts = Array.isArray(products) ? products : [];
 
-  // DEBUG LOGS
   console.log("Current products state:", safeProducts);
   console.log("Loading:", loading, "Error:", error);
 
@@ -151,23 +148,27 @@ const CollectionPage = () => {
                   "https://via.placeholder.com/600x800?text=No+Image";
 
                 return (
-                  <div
+                  // ← FIXED: Wrapped entire card in Link for navigation
+                  <Link
                     key={product._id}
-                    className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+                    to={`/product/${product._id}`}
+                    className="hover:shadow-lg transition-shadow duration-200 block rounded overflow-hidden"
                   >
                     <img
                       src={img}
                       alt={product?.name || "Product"}
-                      className="w-full h-[280px] object-cover rounded"
+                      className="w-full h-[280px] object-cover"
                       loading="lazy"
                     />
-                    <h3 className="mt-2 font-medium text-lg text-gray-900 line-clamp-1">
-                      {product?.name || "Untitled"}
-                    </h3>
-                    <p className="text-gray-600 text-md">
-                      {product?.price != null ? `$${product.price}` : "—"}
-                    </p>
-                  </div>
+                    <div className="p-2">
+                      <h3 className="font-medium text-lg text-gray-900 line-clamp-1">
+                        {product?.name || "Untitled"}
+                      </h3>
+                      <p className="text-gray-600 text-md mt-1">
+                        {product?.price != null ? `$${product.price}` : "—"}
+                      </p>
+                    </div>
+                  </Link>
                 );
               })}
             </div>
