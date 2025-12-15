@@ -55,13 +55,9 @@ const productSchema = new mongoose.Schema({
   },
   images: [
     {
-      url: {
-        type: String,
-        required: true,
-      },
-      altText: {
-        type: String,
-      },
+      type: [String],  // Array of strings
+  required: true,
+  default: [],
     },
   ],
   isFeatured: {

@@ -20,7 +20,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
 const adminOrderRoutes = require("./routes/adminOrderRoutes");
 
-// CORS Configuration - Good as is
+// CORS Configuration
 app.use(
   cors({
     origin: "http://localhost:5173", // Vite default port
@@ -60,8 +60,13 @@ app.get("/", (req, res) => {
   res.json({ message: "Tech-Mart API is running!", timestamp: new Date().toISOString() });
 });
 
+// Handle favicon.ico requests silently (removes 404 error in browser dev tools)
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
 // 404 Handler - for undefined routes
-app.use("*", (req, res) => {
+app.use("/*catchall", (req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
