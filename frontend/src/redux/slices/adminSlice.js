@@ -1,34 +1,31 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance.js"; // ← UPDATED
 
 // fetch all users (admin only)
-export const fetchUsers = createAsyncThunk("admin/fetchUsers", async () => {
-  const response = await axios.get(
-    `${import.meta.env.VITE_BACKEND_URL}/api/admin/users`,
-    {
-      headers: { Authorization: `Bearer ${localStorage.getItem("userToken")}` },
+export const fetchUsers = createAsyncThunk(
+  "admin/fetchUsers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/api/admin/users"); // ← UPDATED
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch users");
     }
-  );
-  return response.data;
-});
+  }
+);
 
 // Add the create user action
 export const addUser = createAsyncThunk(
   "admin/addUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users`,
-        userData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post(
+        "/api/admin/users",
+        userData
+      ); // ← UPDATED
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || { message: "Failed to add user" });
     }
   }
 );
@@ -36,33 +33,29 @@ export const addUser = createAsyncThunk(
 // update user info
 export const updateUser = createAsyncThunk(
   "admin/updateUser",
-  async ({ id, name, email, role }) => {
-    const response = await axios.put(
-      `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${id}`,
-      { name, email, role },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-        },
-      }
-    );
-    return response.data.user;
+  async ({ id, name, email, role }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        `/api/admin/users/${id}`,
+        { name, email, role }
+      ); // ← UPDATED
+      return response.data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to update user");
+    }
   }
 );
 
 // Delete a user
 export const deleteUser = createAsyncThunk(
   "admin/deleteUser",
-  async (id) => {
-    await axios.delete(
-      `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-        },
-      }
-    );
-    return id;
+  async (id, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`/api/admin/users/${id}`); // ← UPDATED
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to delete user");
+    }
   }
 );
 
@@ -105,11 +98,11 @@ const adminSlice = createSlice({
       })
       .addCase(addUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users.push(action.payload.user); // add a new user to the state
+        state.users.push(action.payload.user);
       })
       .addCase(addUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message;
       });
   },
 });

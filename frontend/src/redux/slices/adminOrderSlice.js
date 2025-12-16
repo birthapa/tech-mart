@@ -1,19 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance.js"; // ← UPDATED
 
 // Fetch all orders (admin only)
 export const fetchAllOrders = createAsyncThunk(
   "adminOrders/fetchAllOrders",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get("/api/admin/orders"); // ← UPDATED
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch orders");
@@ -26,15 +19,10 @@ export const updateOrderStatus = createAsyncThunk(
   "adminOrders/updateOrderStatus",
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/${id}`,
-        { status },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.put(
+        `/api/admin/orders/${id}`,
+        { status }
+      ); // ← UPDATED
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update order status");
@@ -47,14 +35,7 @@ export const deleteOrder = createAsyncThunk(
   "adminOrders/deleteOrder",
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
-        }
-      );
+      await axiosInstance.delete(`/api/admin/orders/${id}`); // ← UPDATED
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to delete order");

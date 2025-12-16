@@ -1,28 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance.js"; // ← UPDATED
 
 // CREATE CHECKOUT
 export const createCheckout = createAsyncThunk(
   "checkout/createCheckout",
   async (checkoutData, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("userToken");
-
-      if (!token || token === "null" || token === "undefined" || token.trim() === "") {
-        return rejectWithValue({ message: "Please login again. Token missing." });
-      }
-
-      const response = await axios.post(
-        "/api/checkout",  // ← Relative path (proxied by Vite)
-        checkoutData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      const response = await axiosInstance.post("/api/checkout", checkoutData); // ← UPDATED
       return response.data;
     } catch (error) {
       const msg = error.response?.data?.message || error.message || "Checkout failed";
@@ -36,23 +20,10 @@ export const initiateKhaltiPayment = createAsyncThunk(
   "checkout/initiateKhaltiPayment",
   async (checkoutId, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("userToken");
-
-      if (!token || token.trim() === "") {
-        return rejectWithValue({ message: "Session expired. Please login again." });
-      }
-
-      const response = await axios.post(
-        `/api/checkout/${checkoutId}/initiate-khalti`,  // ← Relative path
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      const response = await axiosInstance.post(
+        `/api/checkout/${checkoutId}/initiateKhalti`, // ← FIXED: matches backend route (no hyphen)
+        {}
+      ); // ← UPDATED
       return response.data;
     } catch (error) {
       const msg = error.response?.data?.message || "Failed to initiate Khalti payment";

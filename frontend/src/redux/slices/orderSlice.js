@@ -1,21 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance.js"; // ← UPDATED (was axios)
 
-// Fetch user orders - NOW USING PROXY
+// Fetch user orders
 export const fetchUserOrders = createAsyncThunk(
   "orders/fetchUserOrders",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("userToken");
-      if (!token) {
-        return rejectWithValue({ message: "No token found. Please login again." });
-      }
-
-      const response = await axios.get("/api/orders/my-orders", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.get("/api/orders/my-orders"); // ← UPDATED
       return response.data;
     } catch (error) {
       const msg = error.response?.data?.message || error.message || "Failed to fetch orders";
@@ -29,16 +20,7 @@ export const fetchOrderDetails = createAsyncThunk(
   "orders/fetchOrderDetails",
   async (orderId, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("userToken");
-      if (!token) {
-        return rejectWithValue({ message: "No token found. Please login again." });
-      }
-
-      const response = await axios.get(`/api/orders/${orderId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.get(`/api/orders/${orderId}`); // ← UPDATED
       return response.data;
     } catch (error) {
       const msg = error.response?.data?.message || error.message || "Failed to fetch order";
@@ -54,7 +36,7 @@ const orderSlice = createSlice({
     totalOrders: 0,
     orderDetails: null,
     loading: false,
-    error: null, // ← will store string message
+    error: null,
   },
   reducers: {
     clearOrderError: (state) => {

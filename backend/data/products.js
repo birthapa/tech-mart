@@ -13,7 +13,7 @@ const products = [
     brand: "Urban Threads",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Red", "Blue", "Yellow"],
-    collections: "Business Casual",
+    collections: ["Business Casual"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -41,7 +41,7 @@ const products = [
     brand: "Modern Fit",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "Navy Blue", "Burgundy"],
-    collections: "Formal Wear",
+    collections: ["Formal Wear"],
     material: "Cotton Blend",
     gender: "Men",
     images: [
@@ -69,7 +69,7 @@ const products = [
     brand: "Street Style",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Light Blue", "Dark Wash"],
-    collections: "Casual Wear",
+    collections: ["Casual Wear"],
     material: "Denim",
     gender: "Men",
     images: [
@@ -97,7 +97,7 @@ const products = [
     brand: "Beach Breeze",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Tropical Print", "Navy Palms"],
-    collections: "Vacation Wear",
+    collections: ["Vacation Wear"],
     material: "Viscose",
     gender: "Men",
     images: [
@@ -125,7 +125,7 @@ const products = [
     brand: "Urban Chic",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Gray"],
-    collections: "Business Wear",
+    collections: ["Business Wear"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -153,7 +153,7 @@ const products = [
     brand: "Polo Classics",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Navy", "Red"],
-    collections: "Casual Wear",
+    collections: ["Casual Wear"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -181,7 +181,7 @@ const products = [
     brand: "Street Vibes",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "Gray"],
-    collections: "Streetwear",
+    collections: ["Streetwear"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -205,7 +205,7 @@ const products = [
     brand: "Heritage Wear",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Heather Gray", "Olive", "Black"],
-    collections: "Casual Wear",
+    collections: ["Casual Wear"],
     material: "Cotton Blend",
     gender: "Men",
     images: [
@@ -229,7 +229,7 @@ const products = [
     brand: "Winter Basics",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Charcoal", "Dark Green", "Navy"],
-    collections: "Winter Essentials",
+    collections: ["Winter Essentials"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -253,7 +253,7 @@ const products = [
     brand: "Everyday Comfort",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Black", "Navy"],
-    collections: "Basics",
+    collections: ["Basics"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -277,7 +277,7 @@ const products = [
     brand: "ActiveWear",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "Gray", "Navy"],
-    collections: "Casual Collection",
+    collections: ["Casual Collection"],
     material: "Cotton Blend",
     gender: "Men",
     images: [
@@ -301,7 +301,7 @@ const products = [
     brand: "UrbanStyle",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Olive", "Black"],
-    collections: "Urban Collection",
+    collections: ["Urban Collection"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -325,7 +325,7 @@ const products = [
     brand: "ChillZone",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Gray", "Charcoal", "Blue"],
-    collections: "Lounge Collection",
+    collections: ["Lounge Collection"],
     material: "Fleece",
     gender: "Men",
     images: [
@@ -349,7 +349,7 @@ const products = [
     brand: "DenimCo",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Dark Blue", "Light Blue"],
-    collections: "Denim Collection",
+    collections: ["Denim Collection"],
     material: "Denim",
     gender: "Men",
     images: [
@@ -373,7 +373,7 @@ const products = [
     brand: "CasualLook",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Beige", "Navy", "Black"],
-    collections: "Smart Casual Collection",
+    collections: ["Smart Casual Collection"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -397,7 +397,7 @@ const products = [
     brand: "SportX",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "Red", "Blue"],
-    collections: "Activewear Collection",
+    collections: ["Activewear Collection"],
     material: "Polyester",
     gender: "Men",
     images: [
@@ -421,7 +421,7 @@ const products = [
     brand: "ExecutiveStyle",
     sizes: ["M", "L", "XL"],
     colors: ["Gray", "Black"],
-    collections: "Office Wear",
+    collections: ["Office Wear"],
     material: "Polyester",
     gender: "Men",
     images: [
@@ -445,7 +445,7 @@ const products = [
     brand: "StreetWear",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Olive", "Brown", "Black"],
-    collections: "Street Style Collection",
+    collections: ["Street Style Collection"],
     material: "Cotton",
     gender: "Men",
     images: [
@@ -469,7 +469,7 @@ const products = [
     brand: "LoungeWear",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Gray", "Black", "Navy"],
-    collections: "Lounge Collection",
+    collections: ["Lounge Collection"],
     material: "Fleece",
     gender: "Men",
     images: [
@@ -493,7 +493,7 @@ const products = [
     brand: "ElegantStyle",
     sizes: ["M", "L", "XL"],
     colors: ["Black", "Navy"],
-    collections: "Formal Collection",
+    collections: ["Formal Collection"],
     material: "Polyester",
     gender: "Men",
     images: [
@@ -517,7 +517,7 @@ const products = [
     brand: "DenimStyle",
     sizes: ["XS", "S", "M", "L", "XL"],
     colors: ["Dark Blue", "Black", "Light Blue"],
-    collections: "Denim Collection",
+    collections: ["Denim Collection"],
     material: "Denim",
     gender: "Women",
     images: [
@@ -541,7 +541,7 @@ const products = [
     brand: "ElegantWear",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Beige", "Black", "White"],
-    collections: "Formal Collection",
+    collections: ["Formal Collection"],
     material: "Polyester",
     gender: "Women",
     images: [
@@ -565,7 +565,7 @@ const products = [
     brand: "ComfyFit",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "Gray", "Navy"],
-    collections: "Activewear Collection",
+    collections: ["Activewear Collection"],
     material: "Cotton Blend",
     gender: "Women",
     images: [
@@ -589,7 +589,7 @@ const products = [
     brand: "ChicStyle",
     sizes: ["S", "M", "L"],
     colors: ["Pink", "Navy", "Black"],
-    collections: "Spring Collection",
+    collections: ["Spring Collection"],
     material: "Polyester",
     gender: "Women",
     images: [
@@ -613,7 +613,7 @@ const products = [
     brand: "BreezyVibes",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Beige", "Light Blue"],
-    collections: "Summer Collection",
+    collections: ["Summer Collection"],
     material: "Linen Blend",
     gender: "Women",
     images: [
@@ -637,7 +637,7 @@ const products = [
     brand: "ActiveWear",
     sizes: ["XS", "S", "M", "L"],
     colors: ["Black", "Gray", "Pink"],
-    collections: "Loungewear Collection",
+    collections: ["Loungewear Collection"],
     material: "Cotton Blend",
     gender: "Women",
     images: [
@@ -661,7 +661,7 @@ const products = [
     brand: "SunnyStyle",
     sizes: ["S", "M", "L"],
     colors: ["White", "Khaki", "Blue"],
-    collections: "Summer Collection",
+    collections: ["Summer Collection"],
     material: "Cotton",
     gender: "Women",
     images: [
@@ -685,7 +685,7 @@ const products = [
     brand: "DenimStyle",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Blue", "Black", "White"],
-    collections: "Denim Collection",
+    collections: ["Denim Collection"],
     material: "Denim",
     gender: "Women",
     images: [
@@ -709,7 +709,7 @@ const products = [
     brand: "ChicStyle",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "White", "Olive"],
-    collections: "Casual Collection",
+    collections: ["Casual Collection"],
     material: "Polyester",
     gender: "Women",
     images: [
@@ -733,7 +733,7 @@ const products = [
     brand: "ElegantWear",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Navy", "Black", "Gray"],
-    collections: "Formal Collection",
+    collections: ["Formal Collection"],
     material: "Wool Blend",
     gender: "Women",
     images: [
@@ -757,7 +757,7 @@ const products = [
     brand: "ChicKnit",
     sizes: ["S", "M", "L"],
     colors: ["Beige", "White"],
-    collections: "Knits Collection",
+    collections: ["Knits Collection"],
     material: "Cotton Blend",
     gender: "Women",
     images: [
@@ -781,7 +781,7 @@ const products = [
     brand: "BohoVibes",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Pink"],
-    collections: "Summer Collection",
+    collections: ["Summer Collection"],
     material: "Viscose",
     gender: "Women",
     images: [
@@ -805,7 +805,7 @@ const products = [
     brand: "ComfyTees",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "White", "Gray"],
-    collections: "Essentials",
+    collections: ["Essentials"],
     material: "Cotton",
     gender: "Women",
     images: [
@@ -829,7 +829,7 @@ const products = [
     brand: "Elegance",
     sizes: ["S", "M", "L"],
     colors: ["Red", "White", "Blue"],
-    collections: "Evening Collection",
+    collections: ["Evening Collection"],
     material: "Polyester",
     gender: "Women",
     images: [
@@ -853,7 +853,7 @@ const products = [
     brand: "DelicateWear",
     sizes: ["S", "M", "L"],
     colors: ["Black", "White"],
-    collections: "Lingerie-Inspired",
+    collections:[ "Lingerie-Inspired"],
     material: "Silk Blend",
     gender: "Women",
     images: [
@@ -877,7 +877,7 @@ const products = [
     brand: "StreetStyle",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Black"],
-    collections: "Urban Collection",
+    collections:[ "Urban Collection"],
     material: "Cotton",
     gender: "Women",
     images: [
@@ -901,7 +901,7 @@ const products = [
     brand: "ComfortFit",
     sizes: ["S", "M", "L", "XL"],
     colors: ["Gray", "Pink", "Brown"],
-    collections: "Fall Collection",
+    collections: ["Fall Collection"],
     material: "Cotton Blend",
     gender: "Women",
     images: [
@@ -925,7 +925,7 @@ const products = [
     brand: "FeminineWear",
     sizes: ["S", "M", "L"],
     colors: ["White", "Navy", "Lavender"],
-    collections: "Summer Collection",
+    collections: ["Summer Collection"],
     material: "Viscose",
     gender: "Women",
     images: [
@@ -949,7 +949,7 @@ const products = [
     brand: "ClassicStyle",
     sizes: ["S", "M", "L", "XL"],
     colors: ["White", "Light Blue", "Black"],
-    collections: "Office Collection",
+    collections: ["Office Collection"],
     material: "Cotton",
     gender: "Women",
     images: [
@@ -973,7 +973,7 @@ const products = [
     brand: "ChicWrap",
     sizes: ["S", "M", "L"],
     colors: ["Red", "Black", "White"],
-    collections: "Evening Collection",
+    collections: ["Evening Collection"],
     material: "Polyester",
     gender: "Women",
     images: [

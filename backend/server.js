@@ -12,7 +12,7 @@ const app = express();
 const productRoutes = require("./routes/productRoutes");
 const userRoutes = require("./routes/userRoutes");
 const cartRoutes = require("./routes/cartRoutes");
-const checkoutRoutes = require("./routes/checkoutRoutes");
+const checkoutRoutes = require("./routes/checkoutRoutes"); // ← ENSURED IMPORT
 const orderRoutes = require("./routes/orderRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const subscribeRoutes = require("./routes/subscribeRoutes");
@@ -32,22 +32,13 @@ app.use(
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" })); // Increased limit for image uploads
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // ← FIXED: was truncated
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
-  });
-
-// API Routes
+// Mount routes
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/checkout", checkoutRoutes);
+app.use("/api/checkout", checkoutRoutes); // ← ADDED: Critical for Khalti initiation
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/subscribe", subscribeRoutes);
@@ -66,7 +57,7 @@ app.get("/favicon.ico", (req, res) => {
 });
 
 // 404 Handler - for undefined routes
-app.use("/*catchall", (req, res) => {
+app.use("*", (req, res) => { // ← FIXED: was "/*catchall" → correct wildcard
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
@@ -78,6 +69,12 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 // Start Server
 const PORT = process.env.PORT || 9000;

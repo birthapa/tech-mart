@@ -17,10 +17,11 @@ const getKhaltiEndpoint = () => {
   }
 };
 
-// @route POST /api/checkout/:id/initiate-khalti
+// @route POST /api/checkout/:id/initiateKhalti
 // @desc Initiate Khalti payment for a checkout session
 // @access Private
-router.post("/:id/initiate-khalti", protect, async (req, res) => {
+// ← FIXED: Removed hyphen after :id → safe path
+router.post("/:id/initiateKhalti", protect, async (req, res) => {
   try {
     // Validate environment variables
     if (!process.env.KHALTI_SECRET_KEY || !process.env.KHALTI_RETURN_URL || !process.env.KHALTI_WEBSITE_URL) {

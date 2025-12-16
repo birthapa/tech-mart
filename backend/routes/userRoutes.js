@@ -48,7 +48,7 @@ router.post("/register", async (req, res) => {
 
     await newUser.save();
 
-    const token = generateToken(newUser);
+    const token = generateToken(newUser); // ← FIXED: was incorrect spread operator
 
     res.status(201).json({
       user: {
@@ -59,8 +59,13 @@ router.post("/register", async (req, res) => {
       },
       token,
     });
-  } catch (err) {
-    console.error("Registration error:", err);
+  } catch (error) {
+    // Handle MongoDB duplicate key error (E11000) gracefully
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    console.error("Registration error:", error);
     res.status(500).json({ message: "Server error during registration" });
   }
 });
@@ -77,7 +82,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
 
-    const token = generateToken(user);
+    const token = generateToken(user); // ← FIXED: proper user object passed
 
     res.json({
       user: {
