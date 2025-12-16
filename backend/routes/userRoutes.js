@@ -20,79 +20,72 @@ const generateToken = (user) => {
 };
 
 // @route   POST /api/users/register
-// @desc    Register a user or admin
+// @desc    Register a user (default: customer). Admin only with secret
 router.post("/register", async (req, res) => {
-  const { name, email, password, role, adminSecret } = req.body;
+  const { name, email, password, adminSecret } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
+    // Check if user already exists
+    if (await User.findOne({ email })) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    let userRole = "customer";
+    // Default role is customer
+    let role = "customer";
 
-    if (role === "admin") {
-      if (adminSecret !== process.env.ADMIN_SECRET) {
-        return res.status(403).json({ message: "Invalid admin secret" });
-      }
-      userRole = "admin";
+    // Only allow admin creation if correct secret is provided
+    if (adminSecret && adminSecret === process.env.ADMIN_SECRET) {
+      role = "admin";
+      console.log("Admin user created via secret key");
     }
 
-    const newUser = new User({
+    // Create user
+    const user = await User.create({
       name,
       email,
       password,
-      role: userRole,
+      role,
     });
 
-    await newUser.save();
-
-    const token = generateToken(newUser); // ← FIXED: was incorrect spread operator
-
-    res.status(201).json({
-      user: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      },
-      token,
-    });
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
   } catch (error) {
-    // Handle MongoDB duplicate key error (E11000) gracefully
     if (error.code === 11000) {
       return res.status(400).json({ message: "Email already exists" });
     }
-
     console.error("Registration error:", error);
     res.status(500).json({ message: "Server error during registration" });
   }
 });
 
 // @route   POST /api/users/login
-// @desc    Authenticate user
+// @desc    Authenticate user & get token
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
 
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(400).json({ message: "Invalid Credentials" });
-    }
-
-    const token = generateToken(user); // ← FIXED: proper user object passed
-
-    res.json({
-      user: {
+    if (user && (await user.matchPassword(password))) {
+      res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
-      },
-      token,
-    });
+        role: user.role, // Role remains as stored — no automatic upgrade
+        token: generateToken(user),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid email or password" });
+    }
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });

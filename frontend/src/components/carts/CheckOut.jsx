@@ -45,7 +45,7 @@ const Checkout = () => {
 
   const handleCreateCheckout = async (e) => {
     e.preventDefault();
-    dispatch(clearCheckoutError()); // Clear any previous errors
+    dispatch(clearCheckoutError());
 
     const payload = {
       checkoutItems: cart.products,
@@ -68,7 +68,6 @@ const Checkout = () => {
   };
 
   const formatPhoneNumber = (value) => {
-    // Remove any non-digit characters except +
     return value.replace(/[^\d+]/g, '');
   };
 
@@ -220,9 +219,12 @@ const Checkout = () => {
               className="flex justify-between items-start gap-4 mb-4"
             >
               <img
-                src={product.image}
-                alt={product.name}
-                className="w-16 h-20 object-cover rounded"
+                src={product.image || "https://via.placeholder.com/80x100?text=No+Image"}
+                alt={product.name || "Product"}
+                className="w-16 h-20 object-cover rounded bg-gray-100"
+                onError={(e) => {
+                  e.target.src = "https://via.placeholder.com/80x100?text=No+Image";
+                }}
               />
               <div className="text-sm flex-1">
                 <p className="font-medium">{product.name}</p>
@@ -231,7 +233,7 @@ const Checkout = () => {
                 <p className="text-gray-600">Qty: {product.quantity || 1}</p>
               </div>
               <p className="text-sm font-semibold whitespace-nowrap">
-                ${(product.price * (product.quantity || 1)).toFixed(2)}
+                Rs. {(product.price * (product.quantity || 1)).toFixed(2)}
               </p>
             </div>
           ))}
@@ -239,7 +241,7 @@ const Checkout = () => {
           <div className="border-t mt-4 pt-4 text-sm space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${totalPrice.toFixed(2)}</span>
+              <span>Rs. {totalPrice.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
@@ -247,7 +249,7 @@ const Checkout = () => {
             </div>
             <div className="flex justify-between font-bold border-t pt-2">
               <span>Total</span>
-              <span>${totalPrice.toFixed(2)}</span>
+              <span>Rs. {totalPrice.toFixed(2)}</span>
             </div>
           </div>
         </div>

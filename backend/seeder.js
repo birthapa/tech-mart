@@ -4,7 +4,7 @@ const Product = require("./models/Product");
 const User = require("./models/User");
 const Cart = require("./models/Cart");
 const products = require("./data/products");
-const bcrypt = require("bcryptjs");  // For password hashing
+// REMOVED bcrypt — no longer needed since no user creation
 
 dotenv.config();
 
@@ -19,28 +19,14 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
 // Function to seed data
 const seedData = async () => {
   try {
-    // Clear existing data
+    // Clear existing data (optional — keep if you want fresh products every time)
     await Product.deleteMany();
-    await User.deleteMany();
     await Cart.deleteMany();
+    // DO NOT delete users — users are created via register route only
+    // await User.deleteMany(); // ← REMOVED: Users are permanent, created via /register
 
-    // Create a default admin user with hashed password
-    const hashedPassword = await bcrypt.hash("123456", 10); // Hash password before storing
-    const createdUser = await User.create({
-      name: "Admin User",
-      email: "admin@example.com",
-      password: hashedPassword,
-      role: "admin",
-    });
-
-    // Assign the default user ID to each product
-    const userID = createdUser._id;
-    const sampleProducts = products.map((product) => {
-      return { ...product, user: userID };
-    });
-
-    // Insert the products into the database
-    await Product.insertMany(sampleProducts);
+    // Seed only products — no user creation
+    await Product.insertMany(products);
 
     console.log("Product data seeded successfully!");
     process.exit(); // Exit after seeding is done

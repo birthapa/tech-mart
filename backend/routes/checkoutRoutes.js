@@ -7,39 +7,30 @@ const Order = require("../models/Order");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
-// Helper function to get Khalti endpoint based on mode (CORRECTED: Fixed sandbox URL)
+// Helper function to get Khalti endpoint based on mode
 const getKhaltiEndpoint = () => {
   if (process.env.KHALTI_MODE === "production") {
     return "https://khalti.com/api/v2/";
   } else {
-    // Sandbox URL: Fixed from "devkhalti.com" to "dev.khalti.com"
     return "https://dev.khalti.com/api/v2/";
   }
 };
 
 // @route POST /api/checkout/:id/initiateKhalti
-// @desc Initiate Khalti payment for a checkout session
-// @access Private
-// ← FIXED: Removed hyphen after :id → safe path
 router.post("/:id/initiateKhalti", protect, async (req, res) => {
   try {
-    // Validate environment variables
-    if (!process.env.KHALTI_SECRET_KEY || !process.env.KHALTI_RETURN_URL || !process.env.KHALTI_WEBSITE_URL) {
-      return res.status(500).json({ message: "Khalti configuration missing. Check environment variables." });
+    if (!process.env.KHALTI_SECRET_KEY || !process.env.KHALTI_WEBSITE_URL) {
+      return res.status(500).json({ message: "Khalti configuration missing." });
     }
 
     const checkout = await Checkout.findById(req.params.id);
-    if (!checkout) {
-      return res.status(404).json({ message: "Checkout not found" });
-    }
-    if (checkout.isPaid) {
-      return res.status(400).json({ message: "Checkout already paid" });
-    }
+    if (!checkout) return res.status(404).json({ message: "Checkout not found" });
+    if (checkout.isPaid) return res.status(400).json({ message: "Checkout already paid" });
 
-    // Prepare payload for Khalti (amount in paisa)
-    const amountInPaisa = Math.round(checkout.totalPrice * 100); // Assuming totalPrice in NPR
+    const amountInPaisa = Math.round(checkout.totalPrice * 100);
+
     const payload = {
-      return_url: process.env.KHALTI_RETURN_URL,
+      return_url: `${process.env.KHALTI_WEBSITE_URL}/order-confirmation`,
       website_url: process.env.KHALTI_WEBSITE_URL,
       amount: amountInPaisa.toString(),
       purchase_order_id: checkout._id.toString(),
@@ -47,56 +38,41 @@ router.post("/:id/initiateKhalti", protect, async (req, res) => {
       customer_info: {
         name: req.user.name || 'Test User',
         email: req.user.email || 'test@example.com',
-        phone: req.user.phone || '9800000001', // Use test phone for sandbox
+        phone: req.user.phone || '9800000001',
       },
     };
 
-    console.log("Khalti Payload:", payload); // For debugging
+    console.log("Khalti Payload:", payload);
 
-    // Khalti API call
     const endpoint = getKhaltiEndpoint();
-    const response = await axios.post(
-      `${endpoint}epayment/initiate/`,
-      payload,
-      {
-        headers: {
-          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const response = await axios.post(`${endpoint}epayment/initiate/`, payload, {
+      headers: {
+        Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-    const { pidx, payment_url } = response.data; // Assuming response has these (based on docs)
+    const { pidx, payment_url } = response.data;
 
-    // Optionally save pidx to checkout for reference
     checkout.paymentDetails = { ...checkout.paymentDetails, pidx };
     await checkout.save();
 
-    console.log(`Khalti payment initiated for checkout ${checkout._id}, pidx: ${pidx}`);
-    res.status(200).json({ 
-      success: true, 
-      payment_url, 
-      pidx,
-      message: "Redirect user to payment_url" 
-    });
+    res.status(200).json({ success: true, payment_url, pidx });
   } catch (error) {
-    console.error("Error initiating Khalti payment:", error.response?.data || error.message);
+    console.error("Error initiating Khalti:", error.response?.data || error.message);
     res.status(500).json({ message: "Failed to initiate payment" });
   }
 });
 
-// @route GET /api/checkout/khalti/callback
-// @desc Handle Khalti callback (verify payment and update status)
-// @access Public (Khalti calls this)
+// NEW: Khalti callback - verify payment and create permanent Order
 router.get("/khalti/callback", async (req, res) => {
   const { pidx, status, amount, transaction_id, purchase_order_id } = req.query;
 
   if (!pidx) {
-    return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/checkout/failure?error=no_pidx`);
+    return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/order-confirmation?status=failed`);
   }
 
   try {
-    // First, verify via lookup API
     const endpoint = getKhaltiEndpoint();
     const lookupResponse = await axios.post(
       `${endpoint}epayment/lookup/`,
@@ -110,48 +86,73 @@ router.get("/khalti/callback", async (req, res) => {
     );
 
     const lookupData = lookupResponse.data;
-    console.log(`Khalti lookup for pidx ${pidx}:`, lookupData);
 
-    if (lookupData.status === 'Completed') {
-      // Update checkout to paid (repurpose existing /pay logic)
+    if (lookupData.status === "Completed") {
       const checkout = await Checkout.findById(purchase_order_id);
-      if (checkout) {
-        checkout.isPaid = true;
-        checkout.paymentStatus = 'paid';
-        checkout.paymentDetails = {
-          ...checkout.paymentDetails,
-          pidx,
-          transaction_id,
-          status: 'Completed',
-          amount: parseInt(amount) / 100, // Back to NPR
-        };
-        checkout.paidAt = new Date();
+      if (!checkout) {
+        return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/order-confirmation?status=failed`);
+      }
+
+      // Mark checkout as paid
+      checkout.isPaid = true;
+      checkout.paymentStatus = "paid";
+      checkout.paymentDetails = {
+        ...checkout.paymentDetails,
+        pidx,
+        transaction_id,
+        status: "Completed",
+        amount: parseInt(amount) / 100,
+      };
+      checkout.paidAt = new Date();
+
+      // CREATE PERMANENT ORDER
+      let finalOrderId = checkout._id;
+
+      if (!checkout.isFinalized) {
+        const finalOrder = await Order.create({
+          user: checkout.user,
+          orderItems: checkout.checkoutItems,
+          shippingAddress: checkout.shippingAddress,
+          paymentMethod: checkout.paymentMethod,
+          totalPrice: checkout.totalPrice,
+          isPaid: true,
+          paidAt: checkout.paidAt,
+          isDelivered: false,
+          paymentStatus: "paid",
+          paymentDetails: checkout.paymentDetails,
+        });
+
+        checkout.isFinalized = true;
+        checkout.finalizedAt = new Date();
         await checkout.save();
 
-        console.log(`Payment verified and updated for checkout ${purchase_order_id}`);
-        // Redirect to frontend success with order ID
-        return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/checkout/success?orderId=${purchase_order_id}`);
+        // Clear user's cart
+        await Cart.findOneAndDelete({ user: checkout.user });
+
+        finalOrderId = finalOrder._id;
+        console.log("Permanent Order created with ID:", finalOrder._id);
       }
-    } else {
-      console.log(`Payment failed for pidx ${pidx}, status: ${lookupData.status}`);
-      return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/checkout/failure?error=${lookupData.status}`);
+
+      await checkout.save();
+
+      // Redirect to confirmation with real Order ID
+      return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/order-confirmation?orderId=${finalOrderId}&status=success`);
     }
+
+    // Payment not completed
+    return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/order-confirmation?status=failed`);
   } catch (error) {
     console.error("Error in Khalti callback:", error.response?.data || error.message);
-    res.redirect(`${process.env.KHALTI_WEBSITE_URL}/checkout/failure?error=verification_failed`);
+    return res.redirect(`${process.env.KHALTI_WEBSITE_URL}/order-confirmation?status=failed`);
   }
 });
 
-// @route PUT /api/checkout/:id/pay
-// @desc Update checkout to mark as paid after successful payment (existing, but now called internally if needed)
-// @access Private
+// Existing routes (unchanged)
 router.put("/:id/pay", protect, async (req, res) => {
   const { paymentStatus, paymentDetails } = req.body;
   try {
     const checkout = await Checkout.findById(req.params.id);
-    if (!checkout) {
-      return res.status(404).json({ message: "Checkout not found" });
-    }
+    if (!checkout) return res.status(404).json({ message: "Checkout not found" });
     if (paymentStatus === "paid") {
       checkout.isPaid = true;
       checkout.paymentStatus = paymentStatus;
@@ -168,18 +169,12 @@ router.put("/:id/pay", protect, async (req, res) => {
   }
 });
 
-// @route POST /api/checkout/:id/finalize
-// @desc Finalize checkout and convert to an order after payment confirmation (existing, unchanged)
-// @access Private
 router.post("/:id/finalize", protect, async (req, res) => {
   try {
     const checkout = await Checkout.findById(req.params.id);
-    if (!checkout) {
-      return res.status(404).json({ message: "Checkout not found" });
-    }
+    if (!checkout) return res.status(404).json({ message: "Checkout not found" });
 
     if (checkout.isPaid && !checkout.isFinalized) {
-      // Create final order based on the checkout details
       const finalOrder = await Order.create({
         user: checkout.user,
         orderItems: checkout.checkoutItems,
@@ -192,11 +187,9 @@ router.post("/:id/finalize", protect, async (req, res) => {
         paymentStatus: "paid",
         paymentDetails: checkout.paymentDetails,
       });
-      // Mark the checkout as finalized
       checkout.isFinalized = true;
       checkout.finalizedAt = Date.now();
       await checkout.save();
-      // Delete the cart associated with the user
       await Cart.findOneAndDelete({ user: checkout.user });
       res.status(201).json(finalOrder);
     } else if (checkout.isFinalized) {
@@ -210,26 +203,21 @@ router.post("/:id/finalize", protect, async (req, res) => {
   }
 });
 
-// @route POST /api/checkout (existing, unchanged)
-// @desc Create a new checkout session
-// @access Private
 router.post("/", protect, async (req, res) => {
   const { checkoutItems, shippingAddress, paymentMethod, totalPrice } = req.body;
   if (!checkoutItems || checkoutItems.length === 0) {
     return res.status(400).json({ message: "no items in checkout" });
   }
   try {
-    // Create a new checkout session
     const newCheckout = await Checkout.create({
       user: req.user._id,
-      checkoutItems: checkoutItems,
+      checkoutItems,
       shippingAddress,
       paymentMethod,
       totalPrice,
       paymentStatus: "Pending",
       isPaid: false,
     });
-    console.log(`Checkout created for user: ${req.user._id}`);
     res.status(201).json(newCheckout);
   } catch (error) {
     console.error("Error Creating checkout session:", error);

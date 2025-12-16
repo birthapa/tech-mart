@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance"; // Use axiosInstance for consistency
 
 // Retrieve user info and token from localStorage if available
 const userFromStorage = localStorage.getItem("userInfo")
@@ -19,69 +19,66 @@ const initialState = {
   error: null,
 };
 
-// Async Thunk for User Login
+// Login user
 export const loginUser = createAsyncThunk(
-  "auth/loginUser",
-  async (userData, { rejectWithValue }) => {
+  "auth/login",
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/users/login`,
-        userData
-      );
-      const { token, user } = response.data;
-      if (!token || !user) {
-        throw new Error("Invalid response from server");
-      }
-      localStorage.setItem("userInfo", JSON.stringify(user));
+      const response = await axiosInstance.post("/api/users/login", {
+        email,
+        password,
+      });
+
+      const { token, ...userData } = response.data;
+
       localStorage.setItem("userToken", token);
-      return user;
+      localStorage.setItem("userInfo", JSON.stringify(userData));
+
+      return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message
-      );
+      const msg = error.response?.data?.message || "Login failed";
+      return rejectWithValue(msg);
     }
   }
 );
 
-// Async Thunk for User Registration
+// Register user
 export const registerUser = createAsyncThunk(
-  "auth/registerUser",
-  async (userData, { rejectWithValue }) => {
+  "auth/register",
+  async ({ name, email, password }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/users/register`,
-        userData
-      );
-      const { token, user } = response.data;
-      if (!token || !user) {
-        throw new Error("Invalid response from server");
-      }
-      localStorage.setItem("userInfo", JSON.stringify(user));
+      const response = await axiosInstance.post("/api/users/register", {
+        name,
+        email,
+        password,
+      });
+
+      const { token, ...userData } = response.data;
+
       localStorage.setItem("userToken", token);
-      return user;
+      localStorage.setItem("userInfo", JSON.stringify(userData));
+
+      return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message
-      );
+      const msg = error.response?.data?.message || "Registration failed";
+      return rejectWithValue(msg);
     }
   }
 );
 
-// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     logout: (state) => {
       state.user = null;
-      state.guestId = `guest_${new Date().getTime()}`;
       localStorage.removeItem("userInfo");
       localStorage.removeItem("userToken");
-      localStorage.setItem("guestId", state.guestId);
     },
     generateNewGuestId: (state) => {
-      state.guestId = `guest_${new Date().getTime()}`;
-      localStorage.setItem("guestId", state.guestId);
+      const newGuestId = `guest_${new Date().getTime()}`;
+      state.guestId = newGuestId;
+      localStorage.setItem("guestId", newGuestId);
     },
   },
   extraReducers: (builder) => {

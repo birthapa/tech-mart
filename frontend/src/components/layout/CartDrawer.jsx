@@ -7,17 +7,15 @@ import { useSelector } from "react-redux";
 const CartDrawer = ({ isOpen = false, toggleCart = () => {} }) => {
   const navigate = useNavigate();
 
-  // Get user and guestId from auth state (adjust path if your auth slice is different)
   const { user } = useSelector((state) => state.auth || {});
   const guestId = useSelector((state) => state.auth?.guestId || null);
 
-  // Get cart from cart state with safe fallback
   const { cart = { products: [] }, loading } = useSelector((state) => state.cart || {});
 
   const userId = user?._id || null;
 
   const handleCheckout = () => {
-    toggleCart(); // Close drawer
+    toggleCart();
     if (!user) {
       navigate("/login?redirect=checkout");
     } else {
@@ -26,50 +24,36 @@ const CartDrawer = ({ isOpen = false, toggleCart = () => {} }) => {
   };
 
   const subtotal = cart.products.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc, item) => acc + item.price * (item.quantity || 1),
     0
   );
 
-  if (!isOpen) return null;
-
   return (
     <>
-      {/* Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={toggleCart} />
+      )}
       <div
-        className="fixed inset-0  bg-opacity-50 z-40"
-        onClick={toggleCart}
-      />
-
-      {/* Drawer */}
-      <div
-        className={`fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col z-50 ${
+        className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-lg z-50 transform transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold">Your Cart</h2>
-          <button
-            onClick={toggleCart}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
-            aria-label="Close cart"
-          >
+          <h2 className="text-xl font-semibold">Your Cart</h2>
+          <button onClick={toggleCart} className="text-gray-500 hover:text-black">
             <IoMdClose className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Cart Contents */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <p className="text-center text-gray-500">Loading cart...</p>
-          ) : cart.products.length > 0 ? (
-            <CartContents cart={cart} userId={userId} guestId={guestId} />
-          ) : (
+        <div className="p-6 overflow-y-auto h-[calc(100%-200px)]">
+          <CartContents cart={cart} userId={userId} guestId={guestId} />
+
+          {cart.products.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">Your cart is empty</p>
+              <p className="text-gray-500 mb-6">Your cart is empty</p>
               <button
                 onClick={toggleCart}
-                className="mt-4 text-blue-600 hover:underline"
+                className="text-blue-600 hover:underline"
               >
                 Continue shopping
               </button>
@@ -77,12 +61,11 @@ const CartDrawer = ({ isOpen = false, toggleCart = () => {} }) => {
           )}
         </div>
 
-        {/* Footer with Subtotal & Checkout */}
         {cart.products.length > 0 && (
           <div className="border-t bg-white p-6">
             <div className="flex justify-between text-lg font-semibold mb-4">
               <span>Subtotal</span>
-              <span>NPR {subtotal.toLocaleString()}</span>
+              <span>Rs. {subtotal.toLocaleString()}</span>
             </div>
             <button
               onClick={handleCheckout}

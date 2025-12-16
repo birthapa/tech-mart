@@ -43,7 +43,7 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   collections: {
-    type: [String], // ✅ FIXED: Allow multiple collections
+    type: [String],
     required: true,
   },
   material: {
@@ -51,12 +51,18 @@ const productSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ["Men", "Women", "Unisex"],
+    required: true,
   },
   images: [
     {
-      url: { type: String, required: true },
-      altText: { type: String, required: true } // Make required: false if altText can be optional
+      url: {
+        type: String,
+        required: true,
+      },
+      altText: {
+        type: String,
+        required: true,
+      },
     },
   ],
   isFeatured: {
@@ -65,7 +71,7 @@ const productSchema = new mongoose.Schema({
   },
   isPublished: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   rating: {
     type: Number,
@@ -79,7 +85,7 @@ const productSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: false, // ← CHANGED: No longer required — product edits permanent even if admin deleted
   },
   metaTitle: {
     type: String,

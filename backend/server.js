@@ -55,11 +55,11 @@ app.get("/", (req, res) => {
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
-
 // 404 Handler - for undefined routes
-app.use("*", (req, res) => { // ← FIXED: was "/*catchall" → correct wildcard
+app.use("/*splat", (req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
+
 
 // Global Error Handler (must be last)
 app.use((err, req, res, next) => {

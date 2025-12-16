@@ -52,9 +52,12 @@ const ProductDetails = ({ productId }) => {
     dispatch(
       addToCart({
         productId: productFetchId,
+        name: selectedProduct.name,
+        price: selectedProduct.price,
         quantity,
         size: selectedSize,
         color: selectedColor,
+        image: selectedProduct.images?.[0]?.url || selectedProduct.images?.[0] || "",
         guestId,
         userId: user?._id,
       })
@@ -77,7 +80,6 @@ const ProductDetails = ({ productId }) => {
   return (
     <div className="max-w-7xl mx-auto p-14">
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Product Images */}
         <div className="w-full lg:w-1/2">
           <img
             src={mainImage}
@@ -97,13 +99,11 @@ const ProductDetails = ({ productId }) => {
           </div>
         </div>
 
-        {/* Product Info */}
         <div className="w-full lg:w-1/2">
           <h1 className="text-3xl font-bold mb-4">{selectedProduct.name}</h1>
-          <p className="text-xl text-gray-600 mb-4">${selectedProduct.price?.toFixed(2)}</p>
+          <p className="text-xl text-gray-600 mb-4">Rs. {selectedProduct.price?.toFixed(2)}</p>
           <p className="mb-4">{selectedProduct.description}</p>
 
-          {/* Size Selection */}
           <div className="mb-6">
             <h3 className="font-medium mb-2">Size</h3>
             <div className="flex gap-2">
@@ -119,7 +119,6 @@ const ProductDetails = ({ productId }) => {
             </div>
           </div>
 
-          {/* Color Selection */}
           <div className="mb-6">
             <h3 className="font-medium mb-2">Color</h3>
             <div className="flex gap-2">
@@ -135,7 +134,6 @@ const ProductDetails = ({ productId }) => {
             </div>
           </div>
 
-          {/* Quantity */}
           <div className="mb-6">
             <h3 className="font-medium mb-2">Quantity</h3>
             <div className="flex items-center gap-4">
@@ -155,7 +153,6 @@ const ProductDetails = ({ productId }) => {
             </div>
           </div>
 
-          {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
             disabled={!selectedSize || !selectedColor || isButtonDisabled}
@@ -166,7 +163,6 @@ const ProductDetails = ({ productId }) => {
         </div>
       </div>
 
-      {/* Similar Products */}
       <div className="mt-16">
         <h2 className="text-2xl font-bold mb-8 text-center">
           You May Also Like

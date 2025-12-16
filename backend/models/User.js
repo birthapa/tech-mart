@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minLength: 6,
+      maxlength: 1024, // ← ADDED: Prevent hash truncation (bcrypt hash is ~60 chars)
     },
     role: {
       type: String,
