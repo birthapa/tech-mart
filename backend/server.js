@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 
 // Load environment variables first
 dotenv.config();
@@ -12,7 +13,7 @@ const app = express();
 const productRoutes = require("./routes/productRoutes");
 const userRoutes = require("./routes/userRoutes");
 const cartRoutes = require("./routes/cartRoutes");
-const checkoutRoutes = require("./routes/checkoutRoutes"); // ← ENSURED IMPORT
+const checkoutRoutes = require("./routes/checkoutRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const subscribeRoutes = require("./routes/subscribeRoutes");
@@ -23,45 +24,54 @@ const adminOrderRoutes = require("./routes/adminOrderRoutes");
 // CORS Configuration
 app.use(
   cors({
-    origin: "http://localhost:5173", // Vite default port
+    origin: "http://localhost:5173",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Body parsing middleware
-app.use(express.json({ limit: "10mb" })); // Increased limit for image uploads
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // ← FIXED: was truncated
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Mount routes
+// API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/checkout", checkoutRoutes); // ← ADDED: Critical for Khalti initiation
+app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/subscribe", subscribeRoutes);
-app.use("/api/admin/users", adminRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/admin/products", productAdminRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
 
-// Root route
-app.get("/", (req, res) => {
-  res.json({ message: "Tech-Mart API is running!", timestamp: new Date().toISOString() });
-});
+// Serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Handle favicon.ico requests silently (removes 404 error in browser dev tools)
+// Favicon
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
-// 404 Handler - for undefined routes
-app.use("/*splat", (req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
-});
 
+// PRODUCTION: Serve frontend build
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-// Global Error Handler (must be last)
+  // FIXED: Named wildcard for Express 5
+  app.get("/*splat", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  });
+} else {
+  // FIXED: Named wildcard for Express 5
+  app.get("/*splat", (req, res) => {
+    res.send(`
+      <h1>Tech-Mart Backend Running</h1>
+      <p>Frontend dev server: <a href="http://localhost:5173">http://localhost:5173</a></p>
+    `);
+  });
+}
+
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global error:", err.stack);
   res.status(err.status || 500).json({

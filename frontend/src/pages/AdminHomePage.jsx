@@ -41,7 +41,7 @@ const AdminHomePage = () => {
           {/* Revenue */}
           <div className="p-4 shadow-md rounded-lg">
             <h2 className="text-xl font-semibold">Revenue</h2>
-            <p className="text-2xl">${(totalSales || 0).toFixed(2)}</p>
+            <p className="text-2xl">Rs.{(totalSales || 0).toFixed(2)}</p>
           </div>
 
           {/* Total Orders */}
@@ -82,7 +82,7 @@ const AdminHomePage = () => {
                   <tr key={order._id} className="border-b hover:bg-gray-50 cursor-pointer">
                     <td className="p-4">{order._id}</td>
                     <td className="p-4">{order.user?.name || 'N/A'}</td>
-                    <td className="p-4">${order.totalPrice.toFixed(2)}</td>
+                    <td className="p-4">Rs.{order.totalPrice.toFixed(2)}</td>
                     <td className="p-4">{order.status}</td>
                   </tr>
                 ))

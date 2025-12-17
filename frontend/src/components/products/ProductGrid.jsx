@@ -31,7 +31,7 @@ const ProductGrid = ({ products, loading, error }) => {
             />
             <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-60 text-black px-4 py-2">
               <h3 className="text-lg font-semibold">{product.name}</h3>
-              <p className="text-sm">${product.price?.toFixed(2)}</p>
+              <p className="text-sm">Rs.{product.price?.toFixed(2)}</p>
             </div>
           </div>
         </Link>

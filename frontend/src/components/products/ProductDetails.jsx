@@ -78,7 +78,7 @@ const ProductDetails = ({ productId }) => {
   if (!selectedProduct) return <p>Product not found.</p>;
 
   return (
-    <div className="max-w-7xl mx-auto p-14">
+    <div className="max-w-7xl mx-auto p-14 mt-[-120px]">
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="w-full lg:w-1/2">
           <img
