@@ -42,6 +42,7 @@ const checkoutSchema = new mongoose.Schema({
   paidAt: { type: Date },
   paymentStatus: { type: String, default: "pending" },
   paymentDetails: { type: mongoose.Schema.Types.Mixed },
+  
   pidx: { type: String },
   isFinalized: { type: Boolean, default: false },
   finalizedAt: { type: Date },
